@@ -1,0 +1,16 @@
+FROM cloudfoundry/cflinuxfs2
+
+ENV CF_STACK cflinuxfs2
+
+ADD <%= cached_buildpack_path %> /tmp/
+ADD <%= fixture_path %> /tmp/staged/
+
+RUN mkdir -p /buildpack
+RUN mkdir -p /tmp/cache
+
+RUN unzip /tmp/<%= cached_buildpack_path %> -d /buildpack
+RUN (sudo tcpdump -n -i eth0 not udp port 53 and ip -c 1 -t | sed -e 's/^[^$]/internet traffic: /' 2>&1 &) \
+ && /buildpack/bin/detect /tmp/staged \
+ && /buildpack/bin/compile /tmp/staged /tmp/cache \
+ && /buildpack/bin/release /tmp/staged /tmp/cache
+
